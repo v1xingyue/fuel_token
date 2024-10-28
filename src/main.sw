@@ -50,7 +50,7 @@ storage {
 
 configurable {
     /// The maximum supply allowed for any single asset.
-    MAX_SUPPLY: u64 = 100_000_000,
+    MAX_SUPPLY: u64 = 1_000_000_000_000_000,
 }
 
 impl SRC20 for Contract {

@@ -58,15 +58,17 @@ program.command("info").action(async () => {
   console.log(`provider is : ${provider.toString()}`);
 
   const balances = await provider.getBalances(wallet.address);
-  console.table(balances.balances);
+  console.table(
+    balances.balances.map((balance) => ({
+      assetId: balance.assetId,
+      amount: balance.amount.toNumber(),
+    }))
+  );
 
   if (balances.balances.length == 0) {
     console.log("need faucet : https://faucet-testnet.fuel.network/ ");
     console.log(`faucet address : ${wallet.address.toAddress()}`);
   }
-
-  const balance = await provider.getBalance(wallet.address, "0x00");
-  console.log(`balance: ${balance}`);
 });
 
 program
@@ -145,7 +147,7 @@ program.command("deploy").action(async () => {
   await update_symbol.waitForResult();
 
   const set_decimals_tx = await mytoken.functions
-    .set_decimals(assetId, 18)
+    .set_decimals(assetId, 9)
     .call();
 
   console.log(
@@ -153,7 +155,18 @@ program.command("deploy").action(async () => {
     `https://app.fuel.network/tx/${set_decimals_tx.transactionId}`
   );
 
-  mytoken.functions.set_name(assetId, "CREATOR").call();
+  await set_decimals_tx.waitForResult();
+
+  const set_name_tx = await mytoken.functions
+    .set_name(assetId, "CREATOR")
+    .call();
+
+  await set_name_tx.waitForResult();
+
+  console.log(
+    `set_name tx transactionId`,
+    `https://app.fuel.network/tx/${set_name_tx.transactionId}`
+  );
 });
 
 program
@@ -182,7 +195,7 @@ program
           },
         },
         sub_id,
-        10000
+        "10000000000"
       )
       .call();
     console.log(

@@ -8,5 +8,5 @@
   Fuels version: 0.94.9
 */
 
-export { Mytoken } from "./Mytoken";
-export { MytokenFactory } from "./MytokenFactory";
+export { Mytoken } from './Mytoken';
+export { MytokenFactory } from './MytokenFactory';
