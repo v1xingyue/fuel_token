@@ -6,23 +6,22 @@ import { Mytoken, MytokenFactory } from "./contract-types";
 
 dotenv.config();
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const program = new Command();
 
-program
-  .version("1.0.0")
-  .description("A Fuel Token CLI Operator")
-  .option(
-    "--network <type>",
-    "specify your network [mainnet, testnet]",
-    "testnet"
-  );
+program.version("1.0.0").description("A Fuel Token CLI Operator");
 
 enum Network {
   MAINNET = "mainnet",
   TESTNET = "testnet",
 }
 
-const useBasic = () => {};
+const transactionLink = (txId: string) => {
+  return `https://${
+    process.env.NETWORK === Network.MAINNET ? "app" : "app-testnet"
+  }.fuel.network/tx/${txId}`;
+};
 
 const default_sub_id =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -93,10 +92,7 @@ program
     const tx = await wallet.transfer(to, amount, asset_id);
     await tx.waitForResult();
 
-    console.log(
-      `transfer tx transactionId`,
-      `https://app.fuel.network/tx/${tx.id}`
-    );
+    console.log("transfer tx transactionId: ", transactionLink(tx.id));
   });
 
 program.command("deploy").action(async () => {
@@ -116,8 +112,8 @@ program.command("deploy").action(async () => {
   ).deploy();
 
   await waitForDeploy();
-
   console.log(`deployed contractId: mytoken - ${contractId}`);
+  await sleep(1500);
 
   const mytoken = new Mytoken(contractId, wallet);
   const { transactionId, waitForResult: waitForConstruct } =
@@ -129,10 +125,8 @@ program.command("deploy").action(async () => {
       })
       .call();
   await waitForConstruct();
-  console.log(
-    `constructor tx transactionId`,
-    `https://app.fuel.network/tx/${transactionId}`
-  );
+  console.log(`constructor tx transactionId`, transactionLink(transactionId));
+  await sleep(1500);
 
   const assetId = createAssetId(contractId, default_sub_id);
 
@@ -141,21 +135,22 @@ program.command("deploy").action(async () => {
     .call();
   console.log(
     `update_symbol tx transactionId`,
-    `https://app.fuel.network/tx/${update_symbol.transactionId}`
+    transactionLink(update_symbol.transactionId)
   );
 
   await update_symbol.waitForResult();
+  await sleep(1500);
 
   const set_decimals_tx = await mytoken.functions
     .set_decimals(assetId, 9)
     .call();
 
+  await set_decimals_tx.waitForResult();
   console.log(
     `set_decimals tx transactionId`,
-    `https://app.fuel.network/tx/${set_decimals_tx.transactionId}`
+    transactionLink(set_decimals_tx.transactionId)
   );
-
-  await set_decimals_tx.waitForResult();
+  await sleep(1500);
 
   const set_name_tx = await mytoken.functions
     .set_name(assetId, "CREATOR")
@@ -165,7 +160,7 @@ program.command("deploy").action(async () => {
 
   console.log(
     `set_name tx transactionId`,
-    `https://app.fuel.network/tx/${set_name_tx.transactionId}`
+    transactionLink(set_name_tx.transactionId)
   );
 });
 
@@ -198,10 +193,7 @@ program
         "10000000000"
       )
       .call();
-    console.log(
-      `mint tx transactionId`,
-      `https://app.fuel.network/tx/${transactionId}`
-    );
+    console.log(`mint tx transactionId`, transactionLink(transactionId));
   });
 
 // 添加 greet 子命令
